@@ -1,0 +1,2273 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Landing Page Animada</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+        }
+
+        .page {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transform: translateZ(-1000px) rotateY(90deg) scale(0.5);
+            transition: all 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+            padding: 2rem;
+            text-align: center;
+            transform-style: preserve-3d;
+            backface-visibility: hidden;
+            will-change: transform, opacity, filter;
+            filter: blur(20px) brightness(0.3);
+            transform-origin: center center;
+            overflow: hidden;
+        }
+
+        .page::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+            z-index: -1;
+        }
+
+        .page.active {
+            opacity: 1;
+            transform: translateZ(0) rotateY(0deg) scale(1);
+            filter: blur(0px) brightness(1);
+        }
+
+        .page.active::before {
+            opacity: 1;
+        }
+
+        .page.prev {
+            transform: translateZ(-800px) rotateY(-75deg) scale(0.3) translateX(-50%);
+            filter: blur(15px) brightness(0.2);
+        }
+
+        .page.next {
+            transform: translateZ(-800px) rotateY(75deg) scale(0.3) translateX(50%);
+            filter: blur(15px) brightness(0.2);
+        }
+
+        .page.transition-out-left {
+            transform: translateZ(-1500px) rotateY(-120deg) scale(0.1) translateX(-100%);
+            filter: blur(30px) brightness(0);
+            opacity: 0;
+        }
+
+        .page.transition-out-right {
+            transform: translateZ(-1500px) rotateY(120deg) scale(0.1) translateX(100%);
+            filter: blur(30px) brightness(0);
+            opacity: 0;
+        }
+
+        .page.transition-in-left {
+            transform: translateZ(-1000px) rotateY(90deg) scale(0.5) translateX(-80%);
+            filter: blur(25px) brightness(0.1);
+            opacity: 0;
+        }
+
+        .page.transition-in-right {
+            transform: translateZ(-1000px) rotateY(-90deg) scale(0.5) translateX(80%);
+            filter: blur(25px) brightness(0.1);
+            opacity: 0;
+        }
+
+        .page.dragging {
+            transition: none;
+        }
+
+        /* Navbar */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-item {
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Page específicos */
+        .home {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .about {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .services {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .portfolio {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .contact {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .team {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        }
+
+        .testimonials {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        }
+
+        .blog {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+        }
+
+        .gallery {
+            background: linear-gradient(135deg, #a8caba 0%, #5d4e75 100%);
+        }
+
+        .page h1 {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0;
+            transform: translateY(50px);
+            animation: slideUp 1s ease forwards 0.5s;
+        }
+
+        .page h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            opacity: 0;
+            transform: translateY(50px);
+            animation: slideUp 1s ease forwards 0.7s;
+        }
+
+        .page p {
+            font-size: 1.2rem;
+            max-width: 600px;
+            line-height: 1.6;
+            opacity: 0;
+            transform: translateY(50px);
+            animation: slideUp 1s ease forwards 0.9s;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50px;
+            color: white;
+            text-decoration: none;
+            margin-top: 2rem;
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(50px);
+            animation: slideUp 1s ease forwards 1.1s;
+        }
+
+        .cta-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(50px);
+            animation: slideUp 1s ease forwards;
+        }
+
+        .feature-card:nth-child(1) { animation-delay: 0.8s; }
+        .feature-card:nth-child(2) { animation-delay: 1s; }
+        .feature-card:nth-child(3) { animation-delay: 1.2s; }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .portfolio-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .portfolio-item {
+            aspect-ratio: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: scale(0.8);
+            animation: scaleIn 0.8s ease forwards;
+        }
+
+        .portfolio-item:nth-child(1) { animation-delay: 0.5s; }
+        .portfolio-item:nth-child(2) { animation-delay: 0.7s; }
+        .portfolio-item:nth-child(3) { animation-delay: 0.9s; }
+        .portfolio-item:nth-child(4) { animation-delay: 1.1s; }
+
+        .portfolio-item:hover {
+            transform: scale(1.05);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .contact-form {
+            max-width: 400px;
+            width: 100%;
+            margin-top: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            opacity: 0;
+            transform: translateX(-50px);
+            animation: slideInRight 0.8s ease forwards;
+        }
+
+        .form-group:nth-child(1) { animation-delay: 0.5s; }
+        .form-group:nth-child(2) { animation-delay: 0.7s; }
+        .form-group:nth-child(3) { animation-delay: 0.9s; }
+        .form-group:nth-child(4) { animation-delay: 1.1s; }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Animações */
+        @keyframes slideUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes scaleIn {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes slideInRight {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Partículas de fundo */
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        /* Sistemas de Transição Únicos */
+        .spiral-transition {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: conic-gradient(from 0deg, 
+                rgba(79, 172, 254, 0.8), 
+                rgba(0, 242, 254, 0.8), 
+                rgba(79, 172, 254, 0.8));
+            opacity: 0;
+            pointer-events: none;
+            z-index: 450;
+            border-radius: 50%;
+            transform: translate(-50%, -50%) rotate(0deg);
+            transition: all 1.8s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        .spiral-transition.active {
+            width: 300vw;
+            height: 300vw;
+            opacity: 1;
+            transform: translate(-50%, -50%) rotate(720deg);
+        }
+
+        .cube-transition {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            perspective: 1000px;
+            pointer-events: none;
+            z-index: 450;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .cube-transition.active {
+            opacity: 1;
+        }
+
+        .cube-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, 
+                rgba(67, 233, 123, 0.9) 0%, 
+                rgba(56, 249, 215, 0.9) 100%);
+            transform-origin: center;
+        }
+
+        .cube-face.front { transform: translateZ(50px); }
+        .cube-face.back { transform: rotateY(180deg) translateZ(50px); }
+        .cube-face.right { transform: rotateY(90deg) translateZ(50px); }
+        .cube-face.left { transform: rotateY(-90deg) translateZ(50px); }
+        .cube-face.top { transform: rotateX(90deg) translateZ(50px); }
+        .cube-face.bottom { transform: rotateX(-90deg) translateZ(50px); }
+
+        .cube-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            animation: cubeRotation 2s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+        }
+
+        @keyframes cubeRotation {
+            0% { transform: rotateX(0deg) rotateY(0deg) scale(0.1); }
+            50% { transform: rotateX(180deg) rotateY(180deg) scale(1.2); }
+            100% { transform: rotateX(360deg) rotateY(360deg) scale(0.1); }
+        }
+
+        .ripple-transition {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 450;
+            opacity: 0;
+            background: radial-gradient(circle, 
+                rgba(250, 112, 154, 0.8) 0%, 
+                rgba(254, 225, 64, 0.8) 100%);
+            clip-path: circle(0% at 50% 50%);
+            transition: all 2s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        .ripple-transition.active {
+            opacity: 1;
+            clip-path: circle(150% at 50% 50%);
+        }
+
+        .ripple-wave {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: rippleExpand 2s ease-out forwards;
+        }
+
+        @keyframes rippleExpand {
+            0% {
+                width: 0;
+                height: 0;
+                opacity: 1;
+            }
+            100% {
+                width: 200vw;
+                height: 200vw;
+                opacity: 0;
+            }
+        }
+
+        .matrix-transition {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 450;
+            opacity: 0;
+            background: linear-gradient(45deg, 
+                rgba(118, 75, 162, 0.95) 0%, 
+                rgba(240, 147, 251, 0.95) 100%);
+            transition: opacity 0.3s ease;
+            overflow: hidden;
+        }
+
+        .matrix-transition.active {
+            opacity: 1;
+        }
+
+        .matrix-strip {
+            position: absolute;
+            top: -100%;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, 
+                transparent 0%, 
+                rgba(255, 255, 255, 0.8) 50%, 
+                transparent 100%);
+            animation: matrixDrop 1.5s linear forwards;
+        }
+
+        @keyframes matrixDrop {
+            0% { top: -100%; }
+            100% { top: 100vh; }
+        }
+
+        /* Transições de Shatter */
+        .shatter-transition {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 450;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .shatter-transition.active {
+            opacity: 1;
+        }
+
+        .shatter-piece {
+            position: absolute;
+            background: linear-gradient(45deg, 
+                rgba(255, 107, 107, 0.8), 
+                rgba(78, 205, 196, 0.8));
+            clip-path: polygon(0% 0%, 100% 20%, 80% 100%, 20% 80%);
+            animation: shatterFly 2s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+        }
+
+        @keyframes shatterFly {
+            0% {
+                transform: rotate(0deg) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: rotate(720deg) scale(0) translateX(200px) translateY(-200px);
+                opacity: 0;
+            }
+        }
+
+        /* NOVAS TRANSIÇÕES ÉPICAS */
+
+        /* Wave Transition - Ondas Oceânicas */
+        .wave-transition {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 450;
+            opacity: 0;
+            overflow: hidden;
+            transition: opacity 0.3s ease;
+        }
+
+        .wave-transition.active {
+            opacity: 1;
+        }
+
+        .wave-layer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(to top, 
+                rgba(108, 92, 231, 0.9) 0%, 
+                rgba(168, 230, 207, 0.6) 50%, 
+                transparent 100%);
+            clip-path: ellipse(150% 60% at 50% 100%);
+            animation: waveMotion 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        .wave-layer:nth-child(2) {
+            animation-delay: 0.3s;
+            background: linear-gradient(to top, 
+                rgba(0, 184, 148, 0.8) 0%, 
+                rgba(253, 121, 168, 0.5) 50%, 
+                transparent 100%);
+        }
+
+        .wave-layer:nth-child(3) {
+            animation-delay: 0.6s;
+            background: linear-gradient(to top, 
+                rgba(255, 107, 107, 0.7) 0%, 
+                rgba(78, 205, 196, 0.4) 50%, 
+                transparent 100%);
+        }
+
+        @keyframes waveMotion {
+            0% {
+                transform: translateX(-100%) translateY(100%);
+                clip-path: ellipse(150% 60% at 50% 100%);
+            }
+            50% {
+                transform: translateX(-20%) translateY(0%);
+                clip-path: ellipse(200% 80% at 50% 100%);
+            }
+            100% {
+                transform: translateX(0%) translateY(-100%);
+                clip-path: ellipse(150% 60% at 50% 100%);
+            }
+        }
+
+        /* Hexagon Transition - Geometria Cristalina */
+        .hexagon-transition {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 450;
+            opacity: 0;
+            background: linear-gradient(135deg, 
+                rgba(168, 230, 207, 0.9) 0%, 
+                rgba(253, 121, 168, 0.9) 100%);
+            transition: opacity 0.3s ease;
+        }
+
+        .hexagon-transition.active {
+            opacity: 1;
+        }
+
+        .hexagon {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.3);
+            clip-path: polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%);
+            animation: hexagonExpand 2s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+        }
+
+        @keyframes hexagonExpand {
+            0% {
+                transform: scale(0) rotate(0deg);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(2) rotate(180deg);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(5) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Particle Burst - Explosão de Partículas */
+        .particle-burst-transition {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 450;
+            opacity: 0;
+            background: radial-gradient(circle at center, 
+                rgba(253, 121, 168, 0.8) 0%, 
+                rgba(108, 92, 231, 0.6) 50%, 
+                transparent 100%);
+            transition: opacity 0.3s ease;
+        }
+
+        .particle-burst-transition.active {
+            opacity: 1;
+        }
+
+        .burst-particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.3));
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            animation: burstExplosion 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        @keyframes burstExplosion {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(0) translateX(var(--burst-x)) translateY(var(--burst-y));
+                opacity: 0;
+            }
+        }
+
+        /* Morphing Transition - Transformação Orgânica */
+        .morphing-transition {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 450;
+            opacity: 0;
+            background: linear-gradient(45deg, 
+                rgba(0, 184, 148, 0.9) 0%, 
+                rgba(255, 202, 87, 0.9) 100%);
+            transition: opacity 0.3s ease;
+            clip-path: circle(0% at 50% 50%);
+        }
+
+        .morphing-transition.active {
+            opacity: 1;
+            animation: morphingExpand 2.2s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+        }
+
+        @keyframes morphingExpand {
+            0% {
+                clip-path: circle(0% at 50% 50%);
+            }
+            25% {
+                clip-path: ellipse(30% 60% at 30% 70%);
+            }
+            50% {
+                clip-path: ellipse(80% 40% at 70% 30%);
+            }
+            75% {
+                clip-path: ellipse(60% 90% at 40% 60%);
+            }
+            100% {
+                clip-path: circle(150% at 50% 50%);
+            }
+        }
+
+        /* Hologram Transition - Efeito Holográfico */
+        .hologram-transition {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 450;
+            opacity: 0;
+            background: 
+                linear-gradient(90deg, transparent 48%, rgba(0, 255, 255, 0.8) 49%, rgba(0, 255, 255, 0.8) 51%, transparent 52%),
+                linear-gradient(0deg, transparent 48%, rgba(255, 0, 255, 0.6) 49%, rgba(255, 0, 255, 0.6) 51%, transparent 52%),
+                radial-gradient(circle, rgba(108, 92, 231, 0.7) 0%, transparent 70%);
+            transition: opacity 0.3s ease;
+            animation: hologramScan 2s linear infinite;
+        }
+
+        .hologram-transition.active {
+            opacity: 1;
+        }
+
+        @keyframes hologramScan {
+            0% {
+                background-position: 0% 0%, 0% 0%, center;
+                filter: hue-rotate(0deg);
+            }
+            100% {
+                background-position: 100% 100%, 100% 100%, center;
+                filter: hue-rotate(360deg);
+            }
+        }
+
+        /* Crystal Transition - Cristais Fragmentados */
+        .crystal-transition {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 450;
+            opacity: 0;
+            background: linear-gradient(135deg, 
+                rgba(168, 230, 207, 0.9) 0%, 
+                rgba(6, 82, 221, 0.9) 100%);
+            transition: opacity 0.3s ease;
+        }
+
+        .crystal-transition.active {
+            opacity: 1;
+        }
+
+        .crystal-shard {
+            position: absolute;
+            background: linear-gradient(45deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.3));
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            animation: crystalShatter 2.3s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+        }
+
+        @keyframes crystalShatter {
+            0% {
+                transform: scale(0) rotate(0deg);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.5) rotate(180deg);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(0.2) rotate(720deg) translateX(var(--crystal-x)) translateY(var(--crystal-y));
+                opacity: 0;
+            }
+        }
+
+        /* Vortex Transition - Vórtice Espiral */
+        .vortex-transition {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 450;
+            opacity: 0;
+            background: conic-gradient(from 0deg at 50% 50%, 
+                rgba(255, 107, 107, 0.9) 0deg, 
+                rgba(78, 205, 196, 0.9) 72deg, 
+                rgba(108, 92, 231, 0.9) 144deg, 
+                rgba(253, 121, 168, 0.9) 216deg, 
+                rgba(0, 184, 148, 0.9) 288deg, 
+                rgba(255, 107, 107, 0.9) 360deg);
+            transition: opacity 0.3s ease;
+            clip-path: circle(0% at 50% 50%);
+        }
+
+        .vortex-transition.active {
+            opacity: 1;
+            animation: vortexSpin 2.5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+        }
+
+        @keyframes vortexSpin {
+            0% {
+                clip-path: circle(0% at 50% 50%);
+                transform: rotate(0deg) scale(1);
+            }
+            50% {
+                clip-path: circle(80% at 50% 50%);
+                transform: rotate(360deg) scale(1.2);
+            }
+            100% {
+                clip-path: circle(150% at 50% 50%);
+                transform: rotate(720deg) scale(1);
+            }
+        }
+
+        /* Lightning Transition - Raios Elétricos */
+        .lightning-transition {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 450;
+            opacity: 0;
+            background: linear-gradient(45deg, 
+                rgba(108, 92, 231, 0.95) 0%, 
+                rgba(6, 82, 221, 0.95) 100%);
+            transition: opacity 0.3s ease;
+        }
+
+        .lightning-transition.active {
+            opacity: 1;
+        }
+
+        .lightning-bolt {
+            position: absolute;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, 
+                rgba(255, 255, 255, 0.9), 
+                rgba(0, 255, 255, 0.7), 
+                rgba(255, 255, 255, 0.9));
+            clip-path: polygon(0% 0%, 100% 0%, 80% 45%, 100% 45%, 0% 100%, 20% 55%, 0% 55%);
+            animation: lightningStrike 1.5s ease-out forwards;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+        }
+
+        @keyframes lightningStrike {
+            0% {
+                opacity: 0;
+                transform: scaleY(0);
+            }
+            20% {
+                opacity: 1;
+                transform: scaleY(1) scaleX(3);
+            }
+            40% {
+                opacity: 1;
+                transform: scaleY(1) scaleX(1);
+            }
+            60% {
+                opacity: 0.8;
+                transform: scaleY(1) scaleX(2);
+            }
+            80% {
+                opacity: 0.6;
+                transform: scaleY(1) scaleX(1);
+            }
+            100% {
+                opacity: 0;
+                transform: scaleY(1) scaleX(0);
+            }
+        }
+
+        .fragment-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 600;
+            overflow: hidden;
+        }
+
+        .fragment {
+            position: absolute;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1), rgba(255,255,255,0.3));
+            opacity: 0;
+            transform-style: preserve-3d;
+        }
+
+        .fragment.animate {
+            animation: fragmentFloat 2s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+        }
+
+        @keyframes fragmentFloat {
+            0% {
+                opacity: 0;
+                transform: translateY(100vh) rotate(0deg) scale(0);
+            }
+            20% {
+                opacity: 1;
+                transform: translateY(80vh) rotate(45deg) scale(0.5);
+            }
+            80% {
+                opacity: 0.8;
+                transform: translateY(20vh) rotate(180deg) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-20vh) rotate(360deg) scale(0);
+            }
+        }
+
+        .liquid-transition {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, 
+                rgba(103, 126, 234, 0.8) 0%, 
+                rgba(118, 75, 162, 0.8) 25%,
+                rgba(240, 147, 251, 0.8) 50%,
+                rgba(245, 87, 108, 0.8) 75%,
+                rgba(79, 172, 254, 0.8) 100%);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 400;
+            clip-path: circle(0% at 50% 50%);
+            transition: all 1.5s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        .liquid-transition.active {
+            opacity: 1;
+            clip-path: circle(150% at 50% 50%);
+        }
+
+        .morphing-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+            z-index: -2;
+        }
+
+        .morphing-bg.active {
+            opacity: 1;
+        }
+
+        .morphing-bg::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                radial-gradient(ellipse at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 50%, rgba(255,255,255,0.05) 0%, transparent 50%);
+            animation: morphBackground 8s ease-in-out infinite;
+        }
+
+        @keyframes morphBackground {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(90deg) scale(1.2); }
+            50% { transform: rotate(180deg) scale(0.8); }
+            75% { transform: rotate(270deg) scale(1.1); }
+        }
+
+        .parallax-layer {
+            position: absolute;
+            width: 120%;
+            height: 120%;
+            top: -10%;
+            left: -10%;
+            background: 
+                radial-gradient(circle at 25% 25%, rgba(255,255,255,0.03) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(255,255,255,0.02) 0%, transparent 50%);
+            transition: transform 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+            z-index: -1;
+        }
+
+        .page.active .parallax-layer {
+            transform: translateZ(100px) scale(1.05);
+        }
+
+        .page.prev .parallax-layer,
+        .page.next .parallax-layer {
+            transform: translateZ(-200px) scale(0.9);
+        }
+
+        .cinematic-vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.3) 100%);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 300;
+            transition: opacity 1s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        .cinematic-vignette.active {
+            opacity: 1;
+        }
+
+        /* Overlay de transição base */
+        .transition-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 30% 40%, rgba(255,255,255,0.1) 0%, transparent 50%),
+                radial-gradient(circle at 70% 60%, rgba(255,255,255,0.05) 0%, transparent 50%),
+                linear-gradient(45deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 500;
+            transition: opacity 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+            backdrop-filter: blur(0px);
+        }
+
+        .transition-overlay.active {
+            opacity: 1;
+            backdrop-filter: blur(5px);
+        }
+
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 4px;
+            background: linear-gradient(90deg, 
+                #ff6b6b 0%, 
+                #4ecdc4 11%,
+                #45b7d1 22%, 
+                #96ceb4 33%,
+                #feca57 44%,
+                #ff9ff3 55%,
+                #a8e6cf 66%,
+                #fd79a8 77%,
+                #6c5ce7 88%,
+                #00b894 100%);
+            z-index: 1001;
+            transition: width 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+            box-shadow: 0 0 10px rgba(255,255,255,0.3);
+        }
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 20px;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8));
+            border-radius: 0 2px 2px 0;
+        }
+
+        /* Efeitos de Partículas Cinematográficas */
+        .particle-system {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 200;
+            overflow: hidden;
+        }
+
+        .cinematic-particle {
+            position: absolute;
+            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.2) 50%, transparent 100%);
+            border-radius: 50%;
+            opacity: 0;
+        }
+
+        .cinematic-particle.active {
+            animation: cinematicFlow 3s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+        }
+
+        @keyframes cinematicFlow {
+            0% {
+                opacity: 0;
+                transform: translateY(100vh) translateX(0) scale(0) rotate(0deg);
+            }
+            20% {
+                opacity: 1;
+                transform: translateY(80vh) translateX(10px) scale(0.5) rotate(90deg);
+            }
+            50% {
+                opacity: 0.8;
+                transform: translateY(50vh) translateX(-10px) scale(1) rotate(180deg);
+            }
+            80% {
+                opacity: 0.4;
+                transform: translateY(20vh) translateX(5px) scale(0.7) rotate(270deg);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-10vh) translateX(0) scale(0) rotate(360deg);
+            }
+        }
+
+        /* Responsivo Sofisticado */
+        @media (max-width: 768px) {
+            .nav-menu {
+                gap: 0.5rem;
+                flex-wrap: wrap;
+            }
+
+            .nav-item {
+                font-size: 0.8rem;
+                padding: 0.3rem 0.6rem;
+            }
+
+            .page h1 {
+                font-size: 2.5rem;
+            }
+
+            .page h2 {
+                font-size: 2rem;
+            }
+
+            .page p {
+                font-size: 1rem;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+            }
+
+            .portfolio-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .nav-menu {
+                gap: 0.3rem;
+            }
+
+            .nav-item {
+                font-size: 0.7rem;
+                padding: 0.2rem 0.4rem;
+            }
+
+            .logo {
+                font-size: 1.2rem;
+            }
+
+            .navbar {
+                padding: 0.8rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">✨ MeuSite</div>
+            <ul class="nav-menu">
+                <li class="nav-item active" data-page="home">Home</li>
+                <li class="nav-item" data-page="about">Sobre</li>
+                <li class="nav-item" data-page="services">Serviços</li>
+                <li class="nav-item" data-page="portfolio">Portfólio</li>
+                <li class="nav-item" data-page="team">Equipe</li>
+                <li class="nav-item" data-page="testimonials">Depoimentos</li>
+                <li class="nav-item" data-page="blog">Blog</li>
+                <li class="nav-item" data-page="gallery">Galeria</li>
+                <li class="nav-item" data-page="contact">Contato</li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Sistema de Partículas Cinematográficas -->
+        <div class="particle-system"></div>
+        
+        <!-- Container de Fragmentos -->
+        <div class="fragment-container"></div>
+        
+        <!-- Transição Líquida (Home → About) -->
+        <div class="liquid-transition"></div>
+        
+        <!-- Transição Espiral (About → Services) -->
+        <div class="spiral-transition"></div>
+        
+        <!-- Transição Cubo 3D (Services → Portfolio) -->
+        <div class="cube-transition">
+            <div class="cube-container">
+                <div class="cube-face front"></div>
+                <div class="cube-face back"></div>
+                <div class="cube-face right"></div>
+                <div class="cube-face left"></div>
+                <div class="cube-face top"></div>
+                <div class="cube-face bottom"></div>
+            </div>
+        </div>
+        
+        <!-- Transição Ripple (Portfolio → Team) -->
+        <div class="ripple-transition"></div>
+        
+        <!-- Transição Wave (Team → Testimonials) -->
+        <div class="wave-transition">
+            <div class="wave-layer"></div>
+            <div class="wave-layer"></div>
+            <div class="wave-layer"></div>
+        </div>
+        
+        <!-- Transição Hexagon (Testimonials → Blog) -->
+        <div class="hexagon-transition"></div>
+        
+        <!-- Transição Particle Burst (Blog → Gallery) -->
+        <div class="particle-burst-transition"></div>
+        
+        <!-- Transição Morphing (Gallery → Contact) -->
+        <div class="morphing-transition"></div>
+        
+        <!-- Transição Matrix (navegação reversa) -->
+        <div class="matrix-transition"></div>
+        
+        <!-- Transição Shatter (alternativa) -->
+        <div class="shatter-transition"></div>
+        
+        <!-- Transição Hologram (premium) -->
+        <div class="hologram-transition"></div>
+        
+        <!-- Transição Crystal (especial) -->
+        <div class="crystal-transition"></div>
+        
+        <!-- Transição Vortex (épica) -->
+        <div class="vortex-transition"></div>
+        
+        <!-- Transição Lightning (elétrica) -->
+        <div class="lightning-transition"></div>
+        
+        <!-- Vinheta Cinematográfica -->
+        <div class="cinematic-vignette"></div>
+        
+        <!-- Overlay de transição base -->
+        <div class="transition-overlay"></div>
+        
+        <!-- Barra de progresso ultra-moderna -->
+        <div class="progress-bar"></div>
+
+        <!-- Partículas de fundo atmosféricas -->
+        <div class="particles">
+            <div class="particle" style="left: 20%; width: 10px; height: 10px; animation-delay: 0s;"></div>
+            <div class="particle" style="left: 40%; width: 6px; height: 6px; animation-delay: 2s;"></div>
+            <div class="particle" style="left: 60%; width: 8px; height: 8px; animation-delay: 4s;"></div>
+            <div class="particle" style="left: 80%; width: 12px; height: 12px; animation-delay: 1s;"></div>
+            <div class="particle" style="left: 10%; width: 4px; height: 4px; animation-delay: 3s;"></div>
+        </div>
+
+        <!-- Página Home -->
+        <div class="page home active" id="home">
+            <div class="parallax-layer"></div>
+            <div class="morphing-bg active"></div>
+            <h1>Bem-vindo ao Futuro</h1>
+            <p>Criamos experiências digitais incríveis que transformam ideias em realidade. 
+               Navegue pelas nossas seções e descubra como podemos ajudar você.</p>
+            <a href="#" class="cta-button" onclick="navigateToIndex(1)">Conheça Mais</a>
+        </div>
+
+        <!-- Página Sobre -->
+        <div class="page about" id="about">
+            <div class="parallax-layer"></div>
+            <div class="morphing-bg"></div>
+            <h2>Sobre Nós</h2>
+            <p>Somos uma equipe apaixonada por tecnologia e design, dedicada a criar 
+               soluções inovadoras que fazem a diferença no mundo digital.</p>
+            <div class="features">
+                <div class="feature-card">
+                    <div class="feature-icon">🚀</div>
+                    <h3>Inovação</h3>
+                    <p>Sempre buscando as últimas tendências tecnológicas</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎨</div>
+                    <h3>Design</h3>
+                    <p>Criatividade e funcionalidade em cada projeto</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Performance</h3>
+                    <p>Soluções rápidas e eficientes para todos</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Página Serviços -->
+        <div class="page services" id="services">
+            <div class="parallax-layer"></div>
+            <div class="morphing-bg"></div>
+            <h2>Nossos Serviços</h2>
+            <p>Oferecemos uma gama completa de serviços digitais para atender suas necessidades.</p>
+            <div class="features">
+                <div class="feature-card">
+                    <div class="feature-icon">💻</div>
+                    <h3>Desenvolvimento Web</h3>
+                    <p>Sites responsivos e aplicações modernas</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3>Apps Mobile</h3>
+                    <p>Aplicativos nativos e híbridos</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">☁️</div>
+                    <h3>Cloud Solutions</h3>
+                    <p>Infraestrutura escalável na nuvem</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Página Portfólio -->
+        <div class="page portfolio" id="portfolio">
+            <div class="parallax-layer"></div>
+            <div class="morphing-bg"></div>
+            <h2>Portfólio</h2>
+            <p>Confira alguns dos nossos projetos mais recentes e impactantes.</p>
+            <div class="portfolio-grid">
+                <div class="portfolio-item">🌟</div>
+                <div class="portfolio-item">🔥</div>
+                <div class="portfolio-item">💎</div>
+                <div class="portfolio-item">✨</div>
+            </div>
+            <a href="#" class="cta-button">Ver Todos os Projetos</a>
+        </div>
+
+        <!-- Página Contato -->
+        <div class="page contact" id="contact">
+            <div class="parallax-layer"></div>
+            <div class="morphing-bg"></div>
+            <h2>Entre em Contato</h2>
+            <p>Pronto para começar seu próximo projeto? Vamos conversar!</p>
+            <form class="contact-form">
+                <div class="form-group">
+                    <input type="text" placeholder="Seu Nome" required>
+                </div>
+                <div class="form-group">
+                    <input type="email" placeholder="Seu Email" required>
+                </div>
+                <div class="form-group">
+                    <textarea rows="4" placeholder="Sua Mensagem" required></textarea>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="cta-button" style="border: none; cursor: pointer;">
+                        Enviar Mensagem
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Página Equipe -->
+        <div class="page team" id="team">
+            <div class="parallax-layer"></div>
+            <div class="morphing-bg"></div>
+            <h2>Nossa Equipe</h2>
+            <p>Conheça os talentos por trás de cada projeto incrível que criamos.</p>
+            <div class="features">
+                <div class="feature-card">
+                    <div class="feature-icon">👨‍💻</div>
+                    <h3>Desenvolvedores</h3>
+                    <p>Experts em tecnologias modernas e práticas ágeis</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎨</div>
+                    <h3>Designers</h3>
+                    <p>Criatividade e usabilidade em cada pixel</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Estrategistas</h3>
+                    <p>Visão de negócio e resultados mensuráveis</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Página Depoimentos -->
+        <div class="page testimonials" id="testimonials">
+            <div class="parallax-layer"></div>
+            <div class="morphing-bg"></div>
+            <h2>Depoimentos</h2>
+            <p>O que nossos clientes dizem sobre nosso trabalho e dedicação.</p>
+            <div class="features">
+                <div class="feature-card">
+                    <div class="feature-icon">⭐</div>
+                    <h3>"Excepcional!"</h3>
+                    <p>"Superaram todas as expectativas. Projeto entregue no prazo e com qualidade impressionante."</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🚀</div>
+                    <h3>"Inovadores"</h3>
+                    <p>"Trouxeram soluções criativas que revolucionaram nossa presença digital."</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💎</div>
+                    <h3>"Profissionais"</h3>
+                    <p>"Comunicação clara, processo transparente e resultados que falam por si só."</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Página Blog -->
+        <div class="page blog" id="blog">
+            <div class="parallax-layer"></div>
+            <div class="morphing-bg"></div>
+            <h2>Blog</h2>
+            <p>Insights, tendências e conhecimento compartilhado com a comunidade.</p>
+            <div class="features">
+                <div class="feature-card">
+                    <div class="feature-icon">📝</div>
+                    <h3>Artigos Técnicos</h3>
+                    <p>Tutoriais e deep dives em tecnologias emergentes</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💡</div>
+                    <h3>Tendências</h3>
+                    <p>O que está moldando o futuro do desenvolvimento</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Casos de Uso</h3>
+                    <p>Estudos de caso e lições aprendidas</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Página Galeria -->
+        <div class="page gallery" id="gallery">
+            <div class="parallax-layer"></div>
+            <div class="morphing-bg"></div>
+            <h2>Galeria</h2>
+            <p>Uma coleção visual dos nossos melhores trabalhos e momentos especiais.</p>
+            <div class="portfolio-grid">
+                <div class="portfolio-item">🖼️</div>
+                <div class="portfolio-item">📸</div>
+                <div class="portfolio-item">🎨</div>
+                <div class="portfolio-item">🌟</div>
+                <div class="portfolio-item">💫</div>
+                <div class="portfolio-item">✨</div>
+            </div>
+            <a href="#" class="cta-button">Ver Galeria Completa</a>
+        </div>
+    </div>
+
+    <script>
+        class CinematicLanding {
+            constructor() {
+                this.pages = ['home', 'about', 'services', 'portfolio', 'team', 'testimonials', 'blog', 'gallery', 'contact'];
+                this.currentIndex = 0;
+                this.isAnimating = false;
+                this.particleSystem = null;
+                this.fragmentSystem = null;
+                
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.updateProgress();
+                this.updateNavigation();
+                this.createAtmosphericParticles();
+                this.initParticleSystems();
+                this.startMorphingBackgrounds();
+            }
+
+            initParticleSystems() {
+                this.particleSystem = document.querySelector('.particle-system');
+                this.fragmentSystem = document.querySelector('.fragment-container');
+            }
+
+            startMorphingBackgrounds() {
+                this.updateMorphingBackgrounds();
+            }
+
+            updateMorphingBackgrounds() {
+                document.querySelectorAll('.morphing-bg').forEach((bg, index) => {
+                    bg.classList.toggle('active', index === this.currentIndex);
+                });
+            }
+
+            // Sistema de mapeamento expandido de transições
+            getTransitionType(fromIndex, toIndex) {
+                const transitions = {
+                    // Sequência principal (progressão)
+                    '0-1': 'liquid',        // Home → About
+                    '1-2': 'spiral',        // About → Services  
+                    '2-3': 'cube',          // Services → Portfolio
+                    '3-4': 'ripple',        // Portfolio → Team
+                    '4-5': 'wave',          // Team → Testimonials
+                    '5-6': 'hexagon',       // Testimonials → Blog
+                    '6-7': 'particle-burst', // Blog → Gallery
+                    '7-8': 'morphing',      // Gallery → Contact
+                    
+                    // Sequência reversa
+                    '1-0': 'matrix',        // About → Home
+                    '2-1': 'shatter',       // Services → About
+                    '3-2': 'vortex',        // Portfolio → Services
+                    '4-3': 'lightning',     // Team → Portfolio
+                    '5-4': 'crystal',       // Testimonials → Team
+                    '6-5': 'hologram',      // Blog → Testimonials
+                    '7-6': 'spiral',        // Gallery → Blog
+                    '8-7': 'cube',          // Contact → Gallery
+                    
+                    // Pulos para frente (2+ seções)
+                    '0-2': 'vortex',        // Home → Services
+                    '0-3': 'crystal',       // Home → Portfolio
+                    '0-4': 'wave',          // Home → Team
+                    '0-5': 'hexagon',       // Home → Testimonials
+                    '0-6': 'particle-burst', // Home → Blog
+                    '0-7': 'hologram',      // Home → Gallery
+                    '0-8': 'lightning',     // Home → Contact
+                    
+                    '1-3': 'morphing',      // About → Portfolio
+                    '1-4': 'crystal',       // About → Team
+                    '1-5': 'wave',          // About → Testimonials
+                    '1-6': 'vortex',        // About → Blog
+                    '1-7': 'lightning',     // About → Gallery
+                    '1-8': 'hologram',      // About → Contact
+                    
+                    '2-4': 'hexagon',       // Services → Team
+                    '2-5': 'particle-burst', // Services → Testimonials
+                    '2-6': 'crystal',       // Services → Blog
+                    '2-7': 'wave',          // Services → Gallery
+                    '2-8': 'vortex',        // Services → Contact
+                    
+                    '3-5': 'spiral',        // Portfolio → Testimonials
+                    '3-6': 'morphing',      // Portfolio → Blog
+                    '3-7': 'matrix',        // Portfolio → Gallery
+                    '3-8': 'shatter',       // Portfolio → Contact
+                    
+                    '4-6': 'lightning',     // Team → Blog
+                    '4-7': 'hologram',      // Team → Gallery
+                    '4-8': 'cube',          // Team → Contact
+                    
+                    '5-7': 'crystal',       // Testimonials → Gallery
+                    '5-8': 'ripple',        // Testimonials → Contact
+                    
+                    '6-8': 'wave',          // Blog → Contact
+                    
+                    // Pulos para trás (2+ seções)
+                    '2-0': 'lightning',     // Services → Home
+                    '3-0': 'hologram',      // Portfolio → Home
+                    '4-0': 'shatter',       // Team → Home
+                    '5-0': 'crystal',       // Testimonials → Home
+                    '6-0': 'morphing',      // Blog → Home
+                    '7-0': 'particle-burst', // Gallery → Home
+                    '8-0': 'vortex',        // Contact → Home
+                    
+                    '3-1': 'hexagon',       // Portfolio → About
+                    '4-1': 'wave',          // Team → About
+                    '5-1': 'lightning',     // Testimonials → About
+                    '6-1': 'crystal',       // Blog → About
+                    '7-1': 'vortex',        // Gallery → About
+                    '8-1': 'particle-burst', // Contact → About
+                    
+                    '4-2': 'matrix',        // Team → Services
+                    '5-2': 'hologram',      // Testimonials → Services
+                    '6-2': 'ripple',        // Blog → Services
+                    '7-2': 'morphing',      // Gallery → Services
+                    '8-2': 'spiral',        // Contact → Services
+                    
+                    '5-3': 'shatter',       // Testimonials → Portfolio
+                    '6-3': 'wave',          // Blog → Portfolio
+                    '7-3': 'crystal',       // Gallery → Portfolio
+                    '8-3': 'hexagon',       // Contact → Portfolio
+                    
+                    '6-4': 'cube',          // Blog → Team
+                    '7-4': 'matrix',        // Gallery → Team
+                    '8-4': 'morphing',      // Contact → Team
+                    
+                    '7-5': 'liquid',        // Gallery → Testimonials
+                    '8-5': 'lightning',     // Contact → Testimonials
+                    
+                    '8-6': 'hologram'       // Contact → Blog
+                };
+                
+                return transitions[`${fromIndex}-${toIndex}`] || 'liquid';
+            }
+
+            // Todas as funções de transição existentes...
+            activateLiquidTransition() {
+                const liquidTransition = document.querySelector('.liquid-transition');
+                const vignette = document.querySelector('.cinematic-vignette');
+                
+                liquidTransition.classList.add('active');
+                vignette.classList.add('active');
+                
+                this.createCinematicParticles();
+                this.createFragmentExplosion();
+                
+                setTimeout(() => {
+                    liquidTransition.classList.remove('active');
+                    vignette.classList.remove('active');
+                }, 1500);
+            }
+
+            activateSpiralTransition() {
+                const spiralTransition = document.querySelector('.spiral-transition');
+                spiralTransition.classList.add('active');
+                this.createSpiralParticles();
+                
+                setTimeout(() => {
+                    spiralTransition.classList.remove('active');
+                }, 1800);
+            }
+
+            activateCubeTransition() {
+                const cubeTransition = document.querySelector('.cube-transition');
+                const cubeContainer = cubeTransition.querySelector('.cube-container');
+                
+                cubeTransition.classList.add('active');
+                
+                cubeContainer.style.animation = 'none';
+                cubeContainer.offsetHeight;
+                cubeContainer.style.animation = 'cubeRotation 2s cubic-bezier(0.19, 1, 0.22, 1) forwards';
+                
+                this.createCubeParticles();
+                
+                setTimeout(() => {
+                    cubeTransition.classList.remove('active');
+                }, 2000);
+            }
+
+            activateRippleTransition() {
+                const rippleTransition = document.querySelector('.ripple-transition');
+                rippleTransition.classList.add('active');
+                this.createRippleWaves();
+                
+                setTimeout(() => {
+                    rippleTransition.classList.remove('active');
+                }, 2000);
+            }
+
+            activateMatrixTransition() {
+                const matrixTransition = document.querySelector('.matrix-transition');
+                matrixTransition.classList.add('active');
+                this.createMatrixEffect();
+                
+                setTimeout(() => {
+                    matrixTransition.classList.remove('active');
+                }, 1500);
+            }
+
+            activateShatterTransition() {
+                const shatterTransition = document.querySelector('.shatter-transition');
+                shatterTransition.classList.add('active');
+                this.createShatterPieces();
+                
+                setTimeout(() => {
+                    shatterTransition.classList.remove('active');
+                }, 2000);
+            }
+
+            // NOVAS TRANSIÇÕES
+            activateWaveTransition() {
+                const waveTransition = document.querySelector('.wave-transition');
+                waveTransition.classList.add('active');
+                
+                setTimeout(() => {
+                    waveTransition.classList.remove('active');
+                }, 2500);
+            }
+
+            activateHexagonTransition() {
+                const hexagonTransition = document.querySelector('.hexagon-transition');
+                hexagonTransition.classList.add('active');
+                this.createHexagonPattern();
+                
+                setTimeout(() => {
+                    hexagonTransition.classList.remove('active');
+                }, 2000);
+            }
+
+            activateParticleBurstTransition() {
+                const burstTransition = document.querySelector('.particle-burst-transition');
+                burstTransition.classList.add('active');
+                this.createParticleBurst();
+                
+                setTimeout(() => {
+                    burstTransition.classList.remove('active');
+                }, 1800);
+            }
+
+            activateMorphingTransition() {
+                const morphingTransition = document.querySelector('.morphing-transition');
+                morphingTransition.classList.add('active');
+                
+                setTimeout(() => {
+                    morphingTransition.classList.remove('active');
+                }, 2200);
+            }
+
+            activateHologramTransition() {
+                const hologramTransition = document.querySelector('.hologram-transition');
+                hologramTransition.classList.add('active');
+                
+                setTimeout(() => {
+                    hologramTransition.classList.remove('active');
+                }, 2000);
+            }
+
+            activateCrystalTransition() {
+                const crystalTransition = document.querySelector('.crystal-transition');
+                crystalTransition.classList.add('active');
+                this.createCrystalShards();
+                
+                setTimeout(() => {
+                    crystalTransition.classList.remove('active');
+                }, 2300);
+            }
+
+            activateVortexTransition() {
+                const vortexTransition = document.querySelector('.vortex-transition');
+                vortexTransition.classList.add('active');
+                
+                setTimeout(() => {
+                    vortexTransition.classList.remove('active');
+                }, 2500);
+            }
+
+            activateLightningTransition() {
+                const lightningTransition = document.querySelector('.lightning-transition');
+                lightningTransition.classList.add('active');
+                this.createLightningBolts();
+                
+                setTimeout(() => {
+                    lightningTransition.classList.remove('active');
+                }, 1500);
+            }
+
+            // Funções para criar efeitos específicos das novas transições
+            createHexagonPattern() {
+                const hexagonTransition = document.querySelector('.hexagon-transition');
+                const hexagonCount = 15;
+                
+                for (let i = 0; i < hexagonCount; i++) {
+                    setTimeout(() => {
+                        const hexagon = document.createElement('div');
+                        hexagon.className = 'hexagon';
+                        hexagon.style.left = Math.random() * 100 + '%';
+                        hexagon.style.top = Math.random() * 100 + '%';
+                        hexagon.style.animationDelay = Math.random() * 0.5 + 's';
+                        
+                        hexagonTransition.appendChild(hexagon);
+                        
+                        setTimeout(() => {
+                            if (hexagon.parentNode) {
+                                hexagon.parentNode.removeChild(hexagon);
+                            }
+                        }, 2000);
+                    }, i * 100);
+                }
+            }
+
+            createParticleBurst() {
+                const burstTransition = document.querySelector('.particle-burst-transition');
+                const particleCount = 30;
+                
+                for (let i = 0; i < particleCount; i++) {
+                    setTimeout(() => {
+                        const particle = document.createElement('div');
+                        particle.className = 'burst-particle';
+                        
+                        const angle = (i / particleCount) * 360;
+                        const distance = Math.random() * 300 + 100;
+                        const x = Math.cos(angle * Math.PI / 180) * distance;
+                        const y = Math.sin(angle * Math.PI / 180) * distance;
+                        
+                        particle.style.setProperty('--burst-x', x + 'px');
+                        particle.style.setProperty('--burst-y', y + 'px');
+                        
+                        burstTransition.appendChild(particle);
+                        
+                        setTimeout(() => {
+                            if (particle.parentNode) {
+                                particle.parentNode.removeChild(particle);
+                            }
+                        }, 1800);
+                    }, i * 20);
+                }
+            }
+
+            createCrystalShards() {
+                const crystalTransition = document.querySelector('.crystal-transition');
+                const shardCount = 12;
+                
+                for (let i = 0; i < shardCount; i++) {
+                    setTimeout(() => {
+                        const shard = document.createElement('div');
+                        shard.className = 'crystal-shard';
+                        
+                        const size = Math.random() * 60 + 30;
+                        shard.style.width = size + 'px';
+                        shard.style.height = size + 'px';
+                        shard.style.left = Math.random() * 100 + '%';
+                        shard.style.top = Math.random() * 100 + '%';
+                        
+                        const x = (Math.random() - 0.5) * 400;
+                        const y = (Math.random() - 0.5) * 400;
+                        shard.style.setProperty('--crystal-x', x + 'px');
+                        shard.style.setProperty('--crystal-y', y + 'px');
+                        
+                        crystalTransition.appendChild(shard);
+                        
+                        setTimeout(() => {
+                            if (shard.parentNode) {
+                                shard.parentNode.removeChild(shard);
+                            }
+                        }, 2300);
+                    }, i * 150);
+                }
+            }
+
+            createLightningBolts() {
+                const lightningTransition = document.querySelector('.lightning-transition');
+                const boltCount = 8;
+                
+                for (let i = 0; i < boltCount; i++) {
+                    setTimeout(() => {
+                        const bolt = document.createElement('div');
+                        bolt.className = 'lightning-bolt';
+                        bolt.style.left = Math.random() * 100 + '%';
+                        bolt.style.animationDelay = Math.random() * 0.3 + 's';
+                        
+                        lightningTransition.appendChild(bolt);
+                        
+                        setTimeout(() => {
+                            if (bolt.parentNode) {
+                                bolt.parentNode.removeChild(bolt);
+                            }
+                        }, 1500);
+                    }, i * 100);
+                }
+            }
+
+            // Resto do código permanece igual...
+            createSpiralParticles() {
+                const particleCount = 20;
+                
+                for (let i = 0; i < particleCount; i++) {
+                    setTimeout(() => {
+                        const particle = document.createElement('div');
+                        particle.className = 'cinematic-particle';
+                        
+                        const size = Math.random() * 6 + 3;
+                        particle.style.width = size + 'px';
+                        particle.style.height = size + 'px';
+                        particle.style.left = '50%';
+                        particle.style.top = '50%';
+                        particle.style.background = 'radial-gradient(circle, rgba(79, 172, 254, 0.8), rgba(0, 242, 254, 0.4))';
+                        
+                        const angle = (i / particleCount) * 360;
+                        const radius = i * 5;
+                        particle.style.transform = `translate(-50%, -50%) rotate(${angle}deg) translateX(${radius}px)`;
+                        
+                        this.particleSystem.appendChild(particle);
+                        
+                        requestAnimationFrame(() => {
+                            particle.classList.add('active');
+                        });
+                        
+                        setTimeout(() => {
+                            if (particle.parentNode) {
+                                particle.parentNode.removeChild(particle);
+                            }
+                        }, 3000);
+                    }, i * 50);
+                }
+            }
+
+            createCubeParticles() {
+                const particleCount = 12;
+                
+                for (let i = 0; i < particleCount; i++) {
+                    setTimeout(() => {
+                        const particle = document.createElement('div');
+                        particle.className = 'cinematic-particle';
+                        
+                        const size = Math.random() * 8 + 4;
+                        particle.style.width = size + 'px';
+                        particle.style.height = size + 'px';
+                        particle.style.left = Math.random() * 100 + '%';
+                        particle.style.top = Math.random() * 100 + '%';
+                        particle.style.background = 'radial-gradient(circle, rgba(67, 233, 123, 0.8), rgba(56, 249, 215, 0.4))';
+                        particle.style.borderRadius = '0%';
+                        
+                        this.particleSystem.appendChild(particle);
+                        
+                        requestAnimationFrame(() => {
+                            particle.classList.add('active');
+                        });
+                        
+                        setTimeout(() => {
+                            if (particle.parentNode) {
+                                particle.parentNode.removeChild(particle);
+                            }
+                        }, 3000);
+                    }, i * 100);
+                }
+            }
+
+            createRippleWaves() {
+                const rippleTransition = document.querySelector('.ripple-transition');
+                const waveCount = 5;
+                
+                for (let i = 0; i < waveCount; i++) {
+                    setTimeout(() => {
+                        const wave = document.createElement('div');
+                        wave.className = 'ripple-wave';
+                        rippleTransition.appendChild(wave);
+                        
+                        setTimeout(() => {
+                            if (wave.parentNode) {
+                                wave.parentNode.removeChild(wave);
+                            }
+                        }, 2000);
+                    }, i * 200);
+                }
+            }
+
+            createMatrixEffect() {
+                const matrixTransition = document.querySelector('.matrix-transition');
+                const stripCount = 30;
+                
+                for (let i = 0; i < stripCount; i++) {
+                    setTimeout(() => {
+                        const strip = document.createElement('div');
+                        strip.className = 'matrix-strip';
+                        strip.style.left = Math.random() * 100 + '%';
+                        strip.style.animationDelay = Math.random() * 0.5 + 's';
+                        matrixTransition.appendChild(strip);
+                        
+                        setTimeout(() => {
+                            if (strip.parentNode) {
+                                strip.parentNode.removeChild(strip);
+                            }
+                        }, 2000);
+                    }, i * 50);
+                }
+            }
+
+            createShatterPieces() {
+                const shatterTransition = document.querySelector('.shatter-transition');
+                const pieceCount = 15;
+                
+                for (let i = 0; i < pieceCount; i++) {
+                    setTimeout(() => {
+                        const piece = document.createElement('div');
+                        piece.className = 'shatter-piece';
+                        
+                        const size = Math.random() * 50 + 30;
+                        piece.style.width = size + 'px';
+                        piece.style.height = size + 'px';
+                        piece.style.left = Math.random() * 100 + '%';
+                        piece.style.top = Math.random() * 100 + '%';
+                        
+                        shatterTransition.appendChild(piece);
+                        
+                        setTimeout(() => {
+                            if (piece.parentNode) {
+                                piece.parentNode.removeChild(piece);
+                            }
+                        }, 2000);
+                    }, i * 100);
+                }
+            }
+
+            createCinematicParticles() {
+                const particleCount = 15;
+                
+                for (let i = 0; i < particleCount; i++) {
+                    setTimeout(() => {
+                        const particle = document.createElement('div');
+                        particle.className = 'cinematic-particle';
+                        
+                        const size = Math.random() * 8 + 2;
+                        particle.style.width = size + 'px';
+                        particle.style.height = size + 'px';
+                        particle.style.left = Math.random() * 100 + '%';
+                        particle.style.bottom = '-10px';
+                        
+                        this.particleSystem.appendChild(particle);
+                        
+                        requestAnimationFrame(() => {
+                            particle.classList.add('active');
+                        });
+                        
+                        setTimeout(() => {
+                            if (particle.parentNode) {
+                                particle.parentNode.removeChild(particle);
+                            }
+                        }, 3000);
+                    }, i * 100);
+                }
+            }
+
+            createFragmentExplosion() {
+                const fragmentCount = 20;
+                
+                for (let i = 0; i < fragmentCount; i++) {
+                    setTimeout(() => {
+                        const fragment = document.createElement('div');
+                        fragment.className = 'fragment';
+                        
+                        const size = Math.random() * 15 + 5;
+                        fragment.style.width = size + 'px';
+                        fragment.style.height = size + 'px';
+                        fragment.style.left = Math.random() * 100 + '%';
+                        fragment.style.top = '100%';
+                        fragment.style.borderRadius = Math.random() > 0.5 ? '50%' : '0%';
+                        
+                        this.fragmentSystem.appendChild(fragment);
+                        
+                        requestAnimationFrame(() => {
+                            fragment.classList.add('animate');
+                        });
+                        
+                        setTimeout(() => {
+                            if (fragment.parentNode) {
+                                fragment.parentNode.removeChild(fragment);
+                            }
+                        }, 2000);
+                    }, i * 50);
+                }
+            }
+
+            setupEventListeners() {
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const targetIndex = this.pages.indexOf(item.dataset.page);
+                        this.navigateToIndex(targetIndex);
+                    });
+                });
+            }
+
+            navigateToIndex(targetIndex) {
+                if (this.isAnimating || targetIndex === this.currentIndex || 
+                    targetIndex < 0 || targetIndex >= this.pages.length) return;
+                
+                this.isAnimating = true;
+                
+                const transitionType = this.getTransitionType(this.currentIndex, targetIndex);
+                this.activateTransition(transitionType);
+                
+                const currentPage = document.getElementById(this.pages[this.currentIndex]);
+                const targetPage = document.getElementById(this.pages[targetIndex]);
+                const direction = targetIndex > this.currentIndex ? 'next' : 'prev';
+                
+                this.resetAllPages();
+                
+                currentPage.classList.remove('active');
+                if (direction === 'next') {
+                    currentPage.classList.add('transition-out-left');
+                    targetPage.classList.add('transition-in-right');
+                } else {
+                    currentPage.classList.add('transition-out-right');
+                    targetPage.classList.add('transition-in-left');
+                }
+                
+                setTimeout(() => {
+                    targetPage.classList.remove('transition-in-left', 'transition-in-right', 'prev', 'next');
+                    targetPage.classList.add('active');
+                    
+                    this.currentIndex = targetIndex;
+                    this.updateProgress();
+                    this.updateNavigation();
+                    this.updateMorphingBackgrounds();
+                    
+                    this.resetPageAnimations(targetPage);
+                    
+                    setTimeout(() => {
+                        this.isAnimating = false;
+                        currentPage.classList.remove('transition-out-left', 'transition-out-right');
+                    }, 600);
+                }, 200);
+            }
+
+            activateTransition(type) {
+                const transitionMap = {
+                    'liquid': () => this.activateLiquidTransition(),
+                    'spiral': () => this.activateSpiralTransition(),
+                    'cube': () => this.activateCubeTransition(),
+                    'ripple': () => this.activateRippleTransition(),
+                    'matrix': () => this.activateMatrixTransition(),
+                    'shatter': () => this.activateShatterTransition(),
+                    'wave': () => this.activateWaveTransition(),
+                    'hexagon': () => this.activateHexagonTransition(),
+                    'particle-burst': () => this.activateParticleBurstTransition(),
+                    'morphing': () => this.activateMorphingTransition(),
+                    'hologram': () => this.activateHologramTransition(),
+                    'crystal': () => this.activateCrystalTransition(),
+                    'vortex': () => this.activateVortexTransition(),
+                    'lightning': () => this.activateLightningTransition()
+                };
+                
+                const transitionFunction = transitionMap[type] || transitionMap['liquid'];
+                transitionFunction();
+            }
+
+            resetAllPages() {
+                document.querySelectorAll('.page').forEach((page, index) => {
+                    page.classList.remove('active', 'prev', 'next',
+                                          'transition-out-left', 'transition-out-right',
+                                          'transition-in-left', 'transition-in-right');
+                    page.style.transform = '';
+                    page.style.opacity = '';
+                    page.style.filter = '';
+                    
+                    if (index !== this.currentIndex) {
+                        page.classList.add(index < this.currentIndex ? 'prev' : 'next');
+                    }
+                });
+            }
+
+            resetPageAnimations(page) {
+                const animatedElements = page.querySelectorAll('[style*="animation"]');
+                animatedElements.forEach(el => {
+                    el.style.animation = 'none';
+                    el.offsetHeight;
+                    el.style.animation = '';
+                });
+            }
+
+            updateProgress() {
+                const progress = ((this.currentIndex + 1) / this.pages.length) * 100;
+                document.querySelector('.progress-bar').style.width = progress + '%';
+            }
+
+            updateNavigation() {
+                document.querySelectorAll('.nav-item').forEach((item, index) => {
+                    item.classList.toggle('active', item.dataset.page === this.pages[this.currentIndex]);
+                });
+            }
+
+            createAtmosphericParticles() {
+                const particles = document.querySelector('.particles');
+                
+                setInterval(() => {
+                    if (Math.random() > 0.8) {
+                        const particle = document.createElement('div');
+                        particle.className = 'particle';
+                        particle.style.left = Math.random() * 100 + '%';
+                        particle.style.top = '100%';
+                        particle.style.width = Math.random() * 12 + 3 + 'px';
+                        particle.style.height = particle.style.width;
+                        particle.style.animationDuration = Math.random() * 4 + 4 + 's';
+                        particle.style.opacity = Math.random() * 0.7 + 0.3;
+                        
+                        particles.appendChild(particle);
+                        
+                        setTimeout(() => {
+                            if (particle.parentNode) {
+                                particle.remove();
+                            }
+                        }, 8000);
+                    }
+                }, 300);
+            }
+        }
+
+        function navigateToIndex(index) {
+            if (window.cinematicLanding) {
+                window.cinematicLanding.navigateToIndex(index);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            window.cinematicLanding = new CinematicLanding();
+            
+            document.querySelector('.contact-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                alert('Mensagem enviada! (Esta é apenas uma demonstração)');
+            });
+        });
+    </script>
+</body>
+</html> 
